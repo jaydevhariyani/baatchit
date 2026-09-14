@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>CropPDFPDF — Free Online PDF Tools</title>
+<meta name="description" content="Free online PDF tools to crop, merge, split, rotate, resize, compress, reorder, delete, extract, number pages and convert PDF pages to images.">
+<meta name="robots" content="index,follow">
+<meta name="theme-color" content="#1769e0">
+<meta property="og:title" content="CropPDFPDF — Free Online PDF Tools">
+<meta property="og:description" content="Fast browser-based PDF tools. Your files are processed locally in your browser.">
+<meta property="og:type" content="website">
+<link rel="canonical" href="https://croppdfpdf.com/">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<style>
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:#f6f8fb;color:#202124;font:15px Arial,Helvetica,sans-serif}
+button,input,select{font:inherit}
+header{background:#fff;border-bottom:1px solid #e5e7eb;position:sticky;top:0;z-index:20}
+.nav{max-width:1180px;margin:auto;height:68px;padding:0 20px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-size:25px;font-weight:800;color:#1769e0;white-space:nowrap}
+.logo span{color:#202124}
+nav a{margin-left:22px;text-decoration:none;color:#444;cursor:pointer}
+.hero{text-align:center;padding:52px 20px 30px}
+.hero h1{font-size:42px;margin:0 0 10px;letter-spacing:-1px}
+.hero p{color:#667085;font-size:17px;margin:0}
+.local-note{margin:20px auto 0;max-width:680px;padding:10px 14px;border-radius:9px;background:#eef5ff;color:#315b96;font-size:13px}
+.grid{max-width:1180px;margin:auto;padding:10px 20px 70px;display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.card{background:#fff;border:1px solid #e2e5e9;border-radius:12px;padding:23px;min-height:150px;cursor:pointer;transition:.18s}
+.card:hover{transform:translateY(-2px);box-shadow:0 8px 25px #0001}
+.icon{font-size:28px}
+.card h3{margin:11px 0 6px}
+.card p{margin:0;color:#667085;line-height:1.4}
+.about{max-width:900px;margin:auto;padding:10px 20px 70px}
+.contact{background:#fff;border:1px solid #e2e5e9;border-radius:12px;padding:22px}
+.footer{border-top:1px solid #e5e7eb;background:#fff;text-align:center;padding:24px;color:#667085;font-size:13px}
+.modal{display:none;position:fixed;inset:0;background:#0009;z-index:50;overflow:auto;padding:15px}
+.modal.open{display:block}
+.panel{max-width:1120px;min-height:92vh;margin:auto;background:#fff;border-radius:14px;padding:20px}
+.head{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #eee;padding-bottom:14px}
+.head h2{margin:0}
+.close{font-size:30px;cursor:pointer;line-height:1}
+.drop{border:2px dashed #bbc5d1;border-radius:12px;background:#fafcff;text-align:center;padding:50px 20px;margin:24px 0;cursor:pointer}
+.drop.drag{border-color:#1769e0;background:#f0f6ff}
+.drop button,.primary{background:#1769e0;color:white;border:0;border-radius:8px;padding:11px 18px;cursor:pointer}
+.drop input{display:none}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+.toolbar button,.toolbar select,.toolbar input{border:1px solid #d4d9e0;background:#fff;border-radius:7px;padding:9px 11px}
+.toolbar button{cursor:pointer}
+.toolbar button:disabled{opacity:.5;cursor:not-allowed}
+.viewer{background:#edf0f4;border-radius:10px;min-height:500px;padding:25px;display:flex;justify-content:center;align-items:flex-start;overflow:auto}
+.page{position:relative;background:#fff;box-shadow:0 3px 18px #0003;display:inline-block;user-select:none;touch-action:none}
+.page canvas{display:block;max-width:none}
+.selection{position:absolute;display:none;border:2px solid #1769e0;background:#1769e025;cursor:move;touch-action:none}
+.handle{position:absolute;width:14px;height:14px;background:#fff;border:2px solid #1769e0;border-radius:3px;touch-action:none}
+.nw{left:-8px;top:-8px;cursor:nwse-resize}.ne{right:-8px;top:-8px;cursor:nesw-resize}
+.sw{left:-8px;bottom:-8px;cursor:nesw-resize}.se{right:-8px;bottom:-8px;cursor:nwse-resize}
+.status{text-align:center;color:#667085;padding:10px;min-height:36px}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(125px,1fr));gap:12px;margin:15px 0}
+.thumb{background:#f5f6f8;border:2px solid transparent;border-radius:8px;padding:7px;text-align:center;cursor:pointer;position:relative}
+.thumb.selected{border-color:#1769e0;background:#f0f6ff}
+.thumb canvas{display:block;max-width:100%;margin:5px auto}
+.thumb.dragging{opacity:.45}
+.drag-hint{font-size:12px;color:#667085;margin:4px 0 12px}
+.notice{padding:13px;background:#f5f7fa;border-radius:8px;color:#555;margin:12px 0;line-height:1.5}
+.small{font-size:13px;color:#667085}
+.progress{height:8px;background:#e8edf3;border-radius:99px;overflow:hidden;margin:12px 0}
+.progress i{display:block;height:100%;width:0;background:#1769e0;transition:.2s}
+.toast{position:fixed;right:18px;bottom:18px;z-index:100;background:#202124;color:#fff;padding:12px 16px;border-radius:9px;box-shadow:0 5px 20px #0003;display:none;max-width:340px}
+.range-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.range-row input{width:110px}
+@media(max-width:850px){
+ .grid{grid-template-columns:repeat(2,1fr)}
+ .hero h1{font-size:33px}
+}
+@media(max-width:520px){
+ .grid{grid-template-columns:1fr;padding-left:14px;padding-right:14px}
+ .nav{height:58px;padding:0 14px}.logo{font-size:21px}nav a{margin-left:12px;font-size:13px}
+ .panel{padding:13px}.modal{padding:7px}.viewer{padding:10px;min-height:400px}
+ .hero{padding:38px 15px 22px}.hero h1{font-size:30px}
+ .drop{padding:38px 12px}.toolbar>*{flex:0 0 auto}
+}
+</style>
+</head>
+<body>
+<header>
+ <div class="nav">
+  <div class="logo">CropPDF<span>PDF</span></div>
+  <nav><a onclick="openTool('crop')">Crop PDF</a><a onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">Contact</a></nav>
+ </div>
+</header>
+
+<section class="hero">
+ <h1>Free Online PDF Tools</h1>
+ <p>Simple, fast PDF tools that work directly in your browser.</p>
+ <div class="local-note">🔒 Your PDF files are processed locally in your browser whenever possible.</div>
+</section>
+
+<section class="grid">
+ <div class="card" onclick="openTool('crop')"><div class="icon">✂️</div><h3>Crop PDF</h3><p>Preview pages and freely resize or move the crop box.</p></div>
+ <div class="card" onclick="openTool('merge')"><div class="icon">📎</div><h3>Merge PDF</h3><p>Combine multiple PDF files into one document.</p></div>
+ <div class="card" onclick="openTool('split')"><div class="icon">✂</div><h3>Split PDF</h3><p>Split a PDF into separate files using page ranges.</p></div>
+ <div class="card" onclick="openTool('rotate')"><div class="icon">🔄</div><h3>Rotate PDF</h3><p>Rotate one page or every page of a PDF.</p></div>
+ <div class="card" onclick="openTool('resize')"><div class="icon">📐</div><h3>Resize PDF</h3><p>Resize pages to A4, A3, Letter or custom dimensions.</p></div>
+ <div class="card" onclick="openTool('compress')"><div class="icon">🗜️</div><h3>Compress PDF</h3><p>Optimize PDF structure for a smaller file where possible.</p></div>
+ <div class="card" onclick="openTool('reorder')"><div class="icon">↕️</div><h3>Reorder Pages</h3><p>Drag page thumbnails into a new order.</p></div>
+ <div class="card" onclick="openTool('delete')"><div class="icon">🗑️</div><h3>Delete Pages</h3><p>Select pages and remove them from the PDF.</p></div>
+ <div class="card" onclick="openTool('numbers')"><div class="icon">🔢</div><h3>Page Numbers</h3><p>Add page numbers and choose their position.</p></div>
+ <div class="card" onclick="openTool('extract')"><div class="icon">📄</div><h3>Extract Pages</h3><p>Select pages and save them as a new PDF.</p></div>
+ <div class="card" onclick="openTool('images')"><div class="icon">🖼️</div><h3>PDF to Images</h3><p>Export selected PDF pages as PNG images.</p></div>
+ <div class="card" onclick="openTool('info')"><div class="icon">ℹ️</div><h3>PDF Info</h3><p>View page count, file size and basic PDF details.</p></div>
+</section>
+
+<section class="about">
+ <h2>CropPDFPDF</h2>
+ <p>Free browser-based PDF utilities for everyday PDF work. No server upload is required for the tools on this page.</p>
+ <div class="contact" id="contact">
+  <h3>Contact Us</h3>
+  <p>Email: <a href="mailto:jaydev.hariyani@gmail.com">jaydev.hariyani@gmail.com</a></p>
+ </div>
+</section>
+
+<footer class="footer">© <span id="year"></span> CropPDFPDF. All rights reserved.</footer>
+
+<div class="modal" id="modal">
+ <div class="panel">
+  <div class="head"><h2 id="toolTitle"></h2><span class="close" onclick="closeTool()">×</span></div>
+  <div id="toolBody"></div>
+ </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const {PDFDocument,StandardFonts,degrees}=PDFLib;
+const $=id=>document.getElementById(id);
+const names={crop:'Crop PDF',merge:'Merge PDF',split:'Split PDF',rotate:'Rotate PDF',resize:'Resize PDF',compress:'Compress PDF',reorder:'Reorder Pages',delete:'Delete Pages',numbers:'Page Numbers',extract:'Extract Pages',images:'PDF to Images',info:'PDF Info'};
+let tool='',srcBytes=null,pdfjsDoc=null,currentPage=1,scale=1.15,crop=null,drag=null,rotations={},mergeFiles=[],selectedFiles=[];
+
+$('year').textContent=new Date().getFullYear();
+
+function toast(msg){const t=$('toast');t.textContent=msg;t.style.display='block';clearTimeout(window._toast);window._toast=setTimeout(()=>t.style.display='none',2600)}
+function openTool(t){tool=t;$('#toolTitle').textContent=names[t];$('#toolBody').innerHTML=uploadUI(t);$('#modal').classList.add('open');bindUpload()}
+function closeTool(){cleanupPointer();$('#modal').classList.remove('open')}
+function uploadUI(t){
+ const multi=t==='merge';
+ return '<div class="drop" id="drop"><h3>'+ (multi?'Drop PDF files here':'Drop your PDF here') +
+ '<\/h3><p>or<\/p><button type="button">Select PDF'+(multi?' files':'')+
+ '<\/button><input id="fileInput" type="file" accept="application/pdf" '+(multi?'multiple':'')+'><\/div><div id="work"><\/div>';
+}
+function bindUpload(){
+ const d=$('drop'),f=$('fileInput');
+ d.onclick=e=>{if(e.target.tagName!=='BUTTON'&&e.target!==d&&e.target.parentElement!==d)return;f.click()};
+ d.querySelector('button').onclick=e=>{e.stopPropagation();f.click()};
+ f.onchange=()=>load([...f.files]);
+ d.ondragover=e=>{e.preventDefault();d.classList.add('drag')};
+ d.ondragleave=()=>d.classList.remove('drag');
+ d.ondrop=e=>{e.preventDefault();d.classList.remove('drag');load([...e.dataTransfer.files])}
+}
+async function load(files){
+ if(!files.length)return;
+ if(tool==='merge'){
+   const good=files.filter(f=>f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf'));
+   if(!good.length)return alert('Please select PDF files.');
+   mergeFiles=good;$('#drop').style.display='none';
+   $('#work').innerHTML='<div class="notice">'+good.length+' PDF file(s) selected.<\/div><div class="thumbs" id="mergeList">'+
+    good.map((f,i)=>'<div class="thumb" draggable="true" data-mi="'+i+'"><b>'+(i+1)+'.<\/b><br>'+escapeHtml(f.name)+'<\/div>').join('')+
+    '<\/div><div class="toolbar"><button onclick="clearMerge()">Change files<\/button><button class="primary" onclick="mergePDF()">Merge & Download<\/button><\/div>';
+   enableMergeDrag(); return;
+ }
+ const f=files[0];
+ if(!(f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf')))return alert('Please select a PDF file.');
+ try{
+  srcBytes=await f.arrayBuffer(); window.currentFileName=f.name;
+  pdfjsDoc=await pdfjsLib.getDocument({data:srcBytes.slice(0)}).promise;
+ }catch(e){return alert('Could not open this PDF. It may be damaged, password protected, or unsupported.')}
+ currentPage=1;scale=1.15;crop=null;rotations={};$('#drop').style.display='none';
+ if(tool==='info')return info();
+ if(tool==='compress')return compressUI();
+ if(['crop','rotate','resize','numbers'].includes(tool))return editor();
+ return pageManager();
+}
+function escapeHtml(s){return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function clearMerge(){openTool('merge')}
+function enableMergeDrag(){
+ const box=$('mergeList');let from=null;
+ box.querySelectorAll('.thumb').forEach(el=>{
+  el.ondragstart=e=>{from=el;e.dataTransfer.effectAllowed='move';el.classList.add('dragging')};
+  el.ondragend=()=>el.classList.remove('dragging');
+  el.ondragover=e=>e.preventDefault();
+  el.ondrop=e=>{e.preventDefault();if(from&&from!==el){box.insertBefore(from,el);syncMergeOrder()}}
+ });
+}
+function syncMergeOrder(){mergeFiles=[...$('mergeList').children].map(x=>mergeFiles[+x.dataset.mi]).filter(Boolean)}
+async function mergePDF(){
+ if(!mergeFiles.length)return;
+ try{
+  const out=await PDFDocument.create();
+  for(const f of mergeFiles){
+   const d=await PDFDocument.load(await f.arrayBuffer(),{ignoreEncryption:false});
+   (await out.copyPages(d,d.getPageIndices())).forEach(pg=>out.addPage(pg));
+  }
+  save(await out.save({useObjectStreams:true}),'merged.pdf');toast('Merged PDF downloaded.');
+ }catch(e){alert('Merge failed. One of the files may be encrypted or invalid.')}
+}
+function editor(){
+ let c='';
+ if(tool==='crop')c='<button onclick="prev()">← Previous</button><button onclick="next()">Next →</button><button onclick="zoom(-.15)">−</button><button onclick="zoom(.15)">+</button><button onclick="resetCrop()">Reset</button><button class="primary" onclick="doCrop()">Download Cropped PDF</button>';
+ if(tool==='rotate')c='<button onclick="turn(-90)">↶ Rotate Left</button><button onclick="turn(90)">↷ Rotate Right</button><button onclick="turn(180)">180°</button><button onclick="turnAll(90)">Rotate All 90°</button><button class="primary" onclick="saveRotations()">Download Rotated PDF</button>';
+ if(tool==='resize')c='<select id="paper"><option value="A4">A4</option><option value="A3">A3</option><option value="LETTER">Letter</option><option value="CUSTOM">Custom</option></select><input id="rw" type="number" min="1" placeholder="width pt"><input id="rh" type="number" min="1" placeholder="height pt"><button class="primary" onclick="doResize()">Download Resized PDF</button>';
+ if(tool==='numbers')c='<input id="nstart" type="number" value="1"><select id="npos"><option value="bc">Bottom Center</option><option value="bl">Bottom Left</option><option value="br">Bottom Right</option><option value="tc">Top Center</option><option value="tl">Top Left</option><option value="tr">Top Right</option></select><button class="primary" onclick="numberPDF()">Download Numbered PDF</button>';
+ $('#work').innerHTML='<div class="toolbar">'+c+'</div><div class="viewer"><div class="page" id="pageWrap"><canvas id="canvas"></canvas>'+(tool==='crop'?'<div class="selection" id="selection"><i class="handle nw"></i><i class="handle ne"></i><i class="handle sw"></i><i class="handle se"></i></div>':'')+'</div></div><div class="status" id="status"></div>';draw();
+}
+async function draw(){
+ let p=await pdfjsDoc.getPage(currentPage),v=p.getViewport({scale,rotation:tool==='rotate'?normRotation(rotations[currentPage]||0):0}),c=$('canvas');
+ c.width=v.width;c.height=v.height;
+ await p.render({canvasContext:c.getContext('2d'),viewport:v}).promise;
+ $('status').textContent='Page '+currentPage+' of '+pdfjsDoc.numPages+(tool==='crop'?' — Drag on the page to create a crop selection.':'');
+ if(tool==='crop')cropHandlers();
+}
+function normRotation(n){return ((n%360)+360)%360}
+function prev(){if(currentPage>1){currentPage--;crop=null;draw()}}
+function next(){if(currentPage<pdfjsDoc.numPages){currentPage++;crop=null;draw()}}
+function zoom(z){scale=Math.max(.5,Math.min(3,scale+z));crop=null;draw()}
+function resetCrop(){crop=null;const s=$('selection');if(s)s.style.display='none'}
+function cleanupPointer(){drag=null;window.onpointermove=null;window.onpointerup=null}
+function cropHandlers(){
+ const wrap=$('pageWrap'),cv=$('canvas'),s=$('selection');
+ wrap.onpointerdown=e=>{
+  const r=wrap.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
+  if(e.target.classList.contains('handle')&&crop){drag={type:e.target.className.split(' ')[1],sx:e.clientX,sy:e.clientY,orig:{...crop}};e.preventDefault();return}
+  if(e.target===s&&crop){drag={type:'move',sx:e.clientX,sy:e.clientY,orig:{...crop}};e.preventDefault();return}
+  if(e.target!==cv)return;
+  crop={x:clamp(x,0,cv.width),y:clamp(y,0,cv.height),w:0,h:0};drag={type:'draw',sx:e.clientX,sy:e.clientY};
+  s.style.display='block';updateCrop();e.preventDefault();
+ };
+ window.onpointermove=e=>{
+  if(!drag||!crop)return;
+  const r=wrap.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top,W=cv.width,H=cv.height,o=drag.orig;
+  if(drag.type==='draw'){
+   const x0=clamp(drag.sx-r.left,0,W),y0=clamp(drag.sy-r.top,0,H);
+   crop.x=Math.min(x0,x);crop.y=Math.min(y0,y);crop.w=Math.abs(x-x0);crop.h=Math.abs(y-y0);
+  }else if(drag.type==='move'){
+   crop.x=clamp(o.x+e.clientX-drag.sx,0,W-o.w);crop.y=clamp(o.y+e.clientY-drag.sy,0,H-o.h);
+  }else resizeCrop(x,y,W,H,o,drag.type);
+  updateCrop();
+ };
+ window.onpointerup=()=>drag=null;
+}
+function clamp(n,a,b){return Math.max(a,Math.min(b,n))}
+function resizeCrop(x,y,W,H,o,t){
+ let r=o.x+o.w,b=o.y+o.h;
+ if(t==='nw'){crop.x=clamp(x,0,r-10);crop.y=clamp(y,0,b-10);crop.w=r-crop.x;crop.h=b-crop.y}
+ else if(t==='ne'){crop.y=clamp(y,0,b-10);crop.w=Math.max(10,Math.min(W-o.x,x-o.x));crop.h=b-crop.y}
+ else if(t==='sw'){crop.x=clamp(x,0,r-10);crop.w=r-crop.x;crop.h=Math.max(10,Math.min(H-o.y,y-o.y))}
+ else{crop.w=Math.max(10,Math.min(W-o.x,x-o.x));crop.h=Math.max(10,Math.min(H-o.y,y-o.y))}
+}
+function updateCrop(){const s=$('selection');if(!s||!crop)return;s.style.left=crop.x+'px';s.style.top=crop.y+'px';s.style.width=crop.w+'px';s.style.height=crop.h+'px';s.style.display='block'}
+async function doCrop(){
+ if(!crop||crop.w<5||crop.h<5)return alert('Select a crop area first.');
+ try{
+  const src=await PDFDocument.load(srcBytes),out=await PDFDocument.create();
+  for(let i=0;i<src.getPageCount();i++){
+   const [p]=await out.copyPages(src,[i]);
+   if(i===currentPage-1){
+    const old=src.getPage(i),W=old.getWidth(),H=old.getHeight();
+    const x=crop.x/$('canvas').width*W,y=crop.y/$('canvas').height*H,w=crop.w/$('canvas').width*W,h=crop.h/$('canvas').height*H;
+    p.setCropBox(x,H-y-h,w,h);p.setMediaBox(x,H-y-h,w,h);
+   }
+   out.addPage(p);
+  }
+  save(await out.save({useObjectStreams:true}),'cropped.pdf');toast('Cropped PDF downloaded.');
+ }catch(e){alert('Crop failed: '+e.message)}
+}
+function turn(x){rotations[currentPage]=normRotation((rotations[currentPage]||0)+x);draw()}
+function turnAll(x){for(let i=1;i<=pdfjsDoc.numPages;i++)rotations[i]=normRotation((rotations[i]||0)+x);draw()}
+async function saveRotations(){
+ try{
+  const src=await PDFDocument.load(srcBytes),out=await PDFDocument.create();
+  for(let i=0;i<src.getPageCount();i++){const [p]=await out.copyPages(src,[i]);if(rotations[i+1])p.setRotation(degrees(normRotation(rotations[i+1])));out.addPage(p)}
+  save(await out.save({useObjectStreams:true}),'rotated.pdf');toast('Rotated PDF downloaded.');
+ }catch(e){alert('Rotation failed.')}
+}
+async function doResize(){
+ let val=$('paper').value,wh={A4:[595.28,841.89],A3:[841.89,1190.55],LETTER:[612,792]}[val];
+ if(val==='CUSTOM')wh=[+$('rw').value,+$('rh').value];
+ if(!wh||!wh[0]||!wh[1]||wh[0]>20000||wh[1]>20000)return alert('Enter valid dimensions in points.');
+ try{
+  const src=await PDFDocument.load(srcBytes),out=await PDFDocument.create();
+  for(let i=0;i<src.getPageCount();i++){
+   const [old]=await out.copyPages(src,[i]),ow=old.getWidth(),oh=old.getHeight(),sc=Math.min(wh[0]/ow,wh[1]/oh),pg=out.addPage(wh),dx=(wh[0]-ow*sc)/2,dy=(wh[1]-oh*sc)/2;
+   pg.drawPage(old,{x:dx,y:dy,xScale:sc,yScale:sc});
+  }
+  save(await out.save({useObjectStreams:true}),'resized.pdf');toast('Resized PDF downloaded.');
+ }catch(e){alert('Resize failed.')}
+}
+async function numberPDF(){
+ try{
+  const src=await PDFDocument.load(srcBytes),font=await src.embedFont(StandardFonts.Helvetica),st=+$('nstart').value||1,pos=$('npos').value;
+  src.getPages().forEach((p,i)=>{const W=p.getWidth(),H=p.getHeight(),t=String(st+i),tw=font.widthOfTextAtSize(t,10),x=pos.endsWith('c')?(W-tw)/2:pos.endsWith('r')?W-35:20,y=pos.startsWith('t')?H-25:15;p.drawText(t,{x,y,size:10,font})});
+  save(await src.save({useObjectStreams:true}),'numbered.pdf');toast('Numbered PDF downloaded.');
+ }catch(e){alert('Could not add page numbers.')}
+}
+
+async function pageManager(){
+ let controls='';
+ if(tool==='split') controls='<div class="range-row"><input id="from" type="number" min="1" placeholder="From"><span>to</span><input id="to" type="number" min="1" placeholder="To"><button class="primary" onclick="splitRange()">Download Range PDF</button></div>';
+ else controls='<div class="toolbar"><button onclick="selectAll()">Select All</button><button onclick="clearAll()">Clear</button><button class="primary" onclick="pageAction()">Download</button></div>';
+ $('#work').innerHTML=controls+
+ '<div id="splitHelp" class="notice" style="display:'+(tool==='split'?'block':'none')+'">Enter a page range, for example 1 to 5. For multiple separate ranges, use Extract Pages instead.</div>'+
+ '<div id="thumbs" class="thumbs"></div><div class="small">'+
+ (tool==='reorder'?'Drag cards to reorder them.':tool==='split'?'Page preview: use the range fields above.':'Click pages to select/deselect them.')+
+ '</div>';await thumbnails();
+}
+async function thumbnails(){
+ let box=$('thumbs');
+ for(let i=1;i<=pdfjsDoc.numPages;i++){
+  let p=await pdfjsDoc.getPage(i),v=p.getViewport({scale:.19}),c=document.createElement('canvas');c.width=v.width;c.height=v.height;
+  await p.render({canvasContext:c.getContext('2d'),viewport:v}).promise;
+  let d=document.createElement('div');d.className='thumb';d.dataset.i=i-1;d.draggable=tool==='reorder';
+  d.innerHTML='<b>Page '+i+'</b>';d.appendChild(c);
+  d.onclick=e=>{if(tool==='reorder')return;if(e.target===c||e.target.tagName==='B')d.classList.toggle('selected')};
+  if(tool==='reorder'){
+   d.ondragstart=e=>{e.dataTransfer.setData('text/plain',d.dataset.i);d.classList.add('dragging')};
+   d.ondragend=()=>d.classList.remove('dragging');
+   d.ondragover=e=>e.preventDefault();
+   d.ondrop=e=>{e.preventDefault();let f=[...box.children].find(x=>x.dataset.i===e.dataTransfer.getData('text/plain'));if(f&&f!==d)box.insertBefore(f,d)};
+  }
+  box.appendChild(d);
+ }
+}
+function selectAll(){document.querySelectorAll('.thumb').forEach(x=>x.classList.add('selected'))}
+function clearAll(){document.querySelectorAll('.thumb').forEach(x=>x.classList.remove('selected'))}
+function selectedIds(){return [...document.querySelectorAll('.thumb.selected')].map(x=>+x.dataset.i)}
+async function pageAction(){
+ let ids=selectedIds();
+ if(tool==='images'){if(!ids.length)return alert('Select pages first.');return images(ids)}
+ if(tool==='reorder')ids=[...document.querySelectorAll('.thumb')].map(x=>+x.dataset.i);
+ if(tool==='delete')ids=pdfjsDoc.getPageIndices().filter(i=>!ids.includes(i));
+ if(tool==='extract'&&!ids.length)return alert('Select pages first.');
+ if(tool==='delete'&&ids.length===0)return alert('You cannot delete all pages.');
+ if(!ids.length)return alert('Select pages first.');
+ try{
+  const src=await PDFDocument.load(srcBytes),out=await PDFDocument.create(),pages=await out.copyPages(src,ids);pages.forEach(x=>out.addPage(x));
+  save(await out.save({useObjectStreams:true}),tool==='delete'?'deleted-pages.pdf':tool==='reorder'?'reordered.pdf':'extracted.pdf');toast('PDF downloaded.');
+ }catch(e){alert('Could not create the PDF.')}
+}
+async function splitRange(){
+ let a=parseInt($('from').value,10),b=parseInt($('to').value,10);
+ if(!a||!b||a<1||b<a||b>pdfjsDoc.numPages)return alert('Enter a valid page range.');
+ let ids=[];for(let i=a-1;i<b;i++)ids.push(i);
+ try{
+  const src=await PDFDocument.load(srcBytes),out=await PDFDocument.create(),pages=await out.copyPages(src,ids);pages.forEach(p=>out.addPage(p));
+  save(await out.save({useObjectStreams:true}),'split-pages-'+a+'-'+b+'.pdf');toast('Split range downloaded.');
+ }catch(e){alert('Split failed.')}
+}
+async function images(ids){
+ try{
+  let d=await pdfjsLib.getDocument({data:srcBytes.slice(0)}).promise;
+  for(let n=0;n<ids.length;n++){
+   let i=ids[n],pg=await d.getPage(i+1),v=pg.getViewport({scale:1.7}),c=document.createElement('canvas');c.width=v.width;c.height=v.height;
+   await pg.render({canvasContext:c.getContext('2d'),viewport:v}).promise;
+   let a=document.createElement('a');a.href=c.toDataURL('image/png');a.download='page-'+(i+1)+'.png';document.body.appendChild(a);a.click();a.remove();
+   await new Promise(r=>setTimeout(r,180));
+  }
+  toast(ids.length+' PNG image(s) downloaded.');
+ }catch(e){alert('Image export failed.')}
+}
+function info(){
+ $('work').innerHTML='<div class="notice"><b>PDF information</b><br><br>Pages: '+pdfjsDoc.numPages+
+ '<br>File size: '+(srcBytes.byteLength/1048576).toFixed(2)+' MB'+
+ '<br>File name: '+escapeHtml((window.currentFileName||'Selected PDF'))+'<\/div>';
+}
+function compressUI(){
+ $('work').innerHTML='<div class="notice"><b>Browser compression note:</b> This tool optimizes PDF object streams without re-encoding embedded images. Text/vector PDFs may shrink; image-heavy PDFs may change little.</div>'+
+ '<div class="toolbar"><button class="primary" onclick="compressPDF()">Optimize & Download</button></div>';
+}
+async function compressPDF(){
+ try{
+  const src=await PDFDocument.load(srcBytes),out=await PDFDocument.create(),pages=await out.copyPages(src,src.getPageIndices());pages.forEach(p=>out.addPage(p));
+  save(await out.save({useObjectStreams:true,addDefaultPage:false}),'compressed.pdf');toast('Optimized PDF downloaded.');
+ }catch(e){alert('Compression failed.')}
+}
+function save(data,name){
+ Promise.resolve(data).then(bytes=>{
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'}));a.download=name;
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+ });
+}
+</script>
+</body>
+</html>
