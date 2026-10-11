@@ -534,3 +534,110 @@ document.getElementById('back-to-home-btn')?.addEventListener('click', () => {
         if(chatBox) chatBox.innerHTML = "";
     }
 });
+// ડમી પ્રોફાઈલ ડેટા (પછી આ ડેટા આપણે Firebase માંથી લાવીશું)
+const dummyProfiles = [
+    { name: "Ayesha, 22", location: "🇵🇰 Karachi, Pakistan", img: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=600&auto=format&fit=crop" },
+    { name: "Fatima, 20", location: "🇦🇪 Dubai, UAE", img: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=600&auto=format&fit=crop" },
+    { name: "Priya, 24", location: "🇮🇳 Mumbai, India", img: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=600&auto=format&fit=crop" },
+    { name: "Zainab, 21", location: "🇵🇰 Lahore, Pakistan", img: "https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=600&auto=format&fit=crop" }
+];
+
+const cardsContainer = document.getElementById('cards-container');
+let currentCards = [];
+
+function buildCards() {
+    // બધા ડમી પ્રોફાઈલ માટે કાર્ડ બનાવો (ઊંધા ક્રમમાં જેથી પહેલું ઉપર દેખાય)
+    dummyProfiles.reverse().forEach((profile, index) => {
+        const card = document.createElement('div');
+        card.classList.add('swipe-card');
+        card.style.backgroundImage = `url('${profile.img}')`;
+        card.style.zIndex = index;
+        
+        card.innerHTML = `
+            <div class="stamp stamp-like">LIKE</div>
+            <div class="stamp stamp-nope">NOPE</div>
+            <div class="card-info">
+                <div class="online-badge">● Online</div>
+                <h3 class="card-name">${profile.name}</h3>
+                <div class="card-location"><i class="fa-solid fa-location-dot"></i> ${profile.location}</div>
+            </div>
+        `;
+        cardsContainer.appendChild(card);
+        currentCards.push(card);
+        initCard(card);
+    });
+}
+
+function initCard(card) {
+    const hammer = new Hammer(card);
+    
+    // કાર્ડ ને પકડીને ફેરવવા માટે
+    hammer.on('pan', function(e) {
+        if (!currentCards.includes(card)) return;
+        card.style.transition = 'none';
+        
+        // ડાબે-જમણે ફેરવવું (Rotation + Move)
+        const xMulti = e.deltaX * 0.03;
+        const yMulti = e.deltaY / 80;
+        const rotate = xMulti * yMulti;
+        
+        card.style.transform = `translate(${e.deltaX}px, ${e.deltaY}px) rotate(${rotate}deg)`;
+        
+        // લાઈક / નોપ નો સિક્કો દેખાડવો
+        const likeStamp = card.querySelector('.stamp-like');
+        const nopeStamp = card.querySelector('.stamp-nope');
+        
+        if (e.deltaX > 20) { likeStamp.style.opacity = e.deltaX / 100; nopeStamp.style.opacity = 0; }
+        else if (e.deltaX < -20) { nopeStamp.style.opacity = Math.abs(e.deltaX) / 100; likeStamp.style.opacity = 0; }
+    });
+
+    // જ્યારે યુઝર કાર્ડ છોડે ત્યારે
+    hammer.on('panend', function(e) {
+        card.style.transition = 'transform 0.4s ease-out';
+        const keep = Math.abs(e.deltaX) < 100; // જો 100px થી ઓછું ખેંચ્યું હોય તો કાર્ડ પાછું આવી જાય
+        
+        if (keep) {
+            card.style.transform = '';
+            card.querySelector('.stamp-like').style.opacity = 0;
+            card.querySelector('.stamp-nope').style.opacity = 0;
+        } else {
+            // કાર્ડ ઉડાડી દેવું (Screen ની બહાર)
+            const endX = Math.max(Math.abs(e.velocityX) * 700, 500);
+            const toX = e.deltaX > 0 ? endX : -endX;
+            const toY = e.deltaY + e.velocityY * 50;
+            card.style.transform = `translate(${toX}px, ${toY}px) rotate(${e.deltaX > 0 ? 30 : -30}deg)`;
+            
+            // જો Right Swipe (Like) કર્યું હોય તો મેચ કરાવવું!
+            if (e.deltaX > 0) {
+                setTimeout(() => {
+                    alert("It's a Match! 🎉 (અહી હવે સીધી ચેટ/વિડીયો સ્ક્રીન ખુલશે)");
+                }, 500);
+            }
+
+            // કાર્ડ ને લિસ્ટ માંથી કાઢી નાખવું
+            currentCards.splice(currentCards.indexOf(card), 1);
+            setTimeout(() => card.remove(), 400);
+        }
+    });
+}
+
+// બટન દ્વારા સ્વાઇપ કરવા માટે
+document.getElementById('btn-like').addEventListener('click', () => swipeCard('right'));
+document.getElementById('btn-nope').addEventListener('click', () => swipeCard('left'));
+
+function swipeCard(direction) {
+    if (currentCards.length === 0) return;
+    const card = currentCards[currentCards.length - 1]; // સૌથી ઉપરનું કાર્ડ
+    card.style.transition = 'transform 0.5s ease-out';
+    card.style.transform = `translate(${direction === 'right' ? 800 : -800}px, -100px) rotate(${direction === 'right' ? 30 : -30}deg)`;
+    
+    if(direction === 'right') card.querySelector('.stamp-like').style.opacity = 1;
+    else card.querySelector('.stamp-nope').style.opacity = 1;
+
+    if (direction === 'right') { setTimeout(() => alert("It's a Match! 🎉"), 500); }
+    currentCards.pop();
+    setTimeout(() => card.remove(), 500);
+}
+
+// પેજ લોડ થાય ત્યારે કાર્ડ્સ બનાવો
+buildCards();
